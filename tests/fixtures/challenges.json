@@ -1,0 +1,24 @@
+{
+  "challenges": [
+    {
+      "id": 101104,
+      "name": "Medicina caducada",
+      "description": "Mata a oponentes con una habilidad.",
+      "reverseDirection": false,
+      "thresholds": {
+        "SILVER": {"value": 10, "rewards": [{"category": "TITLE", "id": "title-med"}]},
+        "GOLD": {"value": 15, "rewards": [{"category": "TITLE", "id": "title-med"}, {"category": "EMOTE", "id": "nope"}]}
+      }
+    },
+    {
+      "id": 202020,
+      "name": "Calma total",
+      "description": "Reducí tu promedio de muertes.",
+      "reverseDirection": true,
+      "thresholds": {
+        "SILVER": {"value": 6, "rewards": [{"category": "TITLE", "id": "title-calm"}]},
+        "GOLD": {"value": 2, "levelToIconPath": "/lol-game-data/assets/ASSETS/Challenges/Config/202020/Tokens/GOLD.png", "rewards": [{"category": "TITLE", "id": "title-calm"}]}
+      }
+    }
+  ]
+}

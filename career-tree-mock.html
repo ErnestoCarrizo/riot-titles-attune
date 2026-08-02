@@ -1,0 +1,346 @@
+<div id="career-tree-mock">
+  <style>
+    #career-tree-mock {
+      --ctm-bg: #0a0f13;
+      --ctm-panel: #111a21;
+      --ctm-panel-raised: #18252d;
+      --ctm-line: #2c3d46;
+      --ctm-ink: #f0f3ef;
+      --ctm-muted: #85969a;
+      --ctm-gold: #d2ae68;
+      --ctm-cyan: #5ecbc2;
+      --ctm-cyan-soft: #163d40;
+      --ctm-orange: #d9875b;
+      display: grid;
+      grid-template-columns: 238px minmax(0, 1fr) 288px;
+      min-height: 620px;
+      overflow: hidden;
+      color: var(--ctm-ink);
+      background: var(--ctm-bg);
+      border: 1px solid #26363e;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    #career-tree-mock * { box-sizing: border-box; }
+    #career-tree-mock button { font: inherit; }
+    .ctm-rail { padding: 25px 18px; background: #0d151a; border-right: 1px solid var(--ctm-line); }
+    .ctm-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 48px; font-size: 12px; font-weight: 800; letter-spacing: .04em; }
+    .ctm-sigil { display: grid; place-items: center; width: 29px; height: 29px; color: #182019; background: var(--ctm-gold); clip-path: polygon(50% 0, 90% 20%, 100% 50%, 90% 80%, 50% 100%, 10% 80%, 0 50%, 10% 20%); font-size: 9px; font-weight: 900; }
+    .ctm-rail-label { margin: 0 0 12px; color: var(--ctm-muted); font-size: 9px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; }
+    .ctm-destination { display: flex; gap: 10px; align-items: center; padding: 11px 9px; color: var(--ctm-ink); background: var(--ctm-cyan-soft); border-left: 2px solid var(--ctm-cyan); font-size: 12px; }
+    .ctm-destination-mark { width: 9px; height: 9px; background: var(--ctm-cyan); transform: rotate(45deg); }
+    .ctm-rail-list { display: grid; gap: 4px; margin: 10px 0 36px; padding: 0; list-style: none; }
+    .ctm-rail-item { display: flex; justify-content: space-between; gap: 8px; padding: 9px; color: var(--ctm-muted); font-size: 11px; }
+    .ctm-rail-item strong { color: var(--ctm-ink); font-weight: 650; }
+    .ctm-rail-item span { color: var(--ctm-gold); font-variant-numeric: tabular-nums; }
+    .ctm-legend { display: grid; gap: 10px; color: var(--ctm-muted); font-size: 10px; }
+    .ctm-legend-line { display: flex; align-items: center; gap: 8px; }
+    .ctm-legend-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ctm-cyan); box-shadow: 0 0 12px rgba(94,203,194,.5); }
+    .ctm-legend-dot.ctm-progress { background: var(--ctm-orange); box-shadow: 0 0 12px rgba(217,135,91,.45); }
+    .ctm-legend-dot.ctm-locked { background: #3a4b54; box-shadow: none; }
+
+    .ctm-main { min-width: 0; padding: 28px 31px 35px; background: radial-gradient(circle at 50% 40%, rgba(29,75,80,.13), transparent 40%), var(--ctm-bg); }
+    .ctm-kicker { margin: 0 0 8px; color: var(--ctm-gold); font-size: 10px; font-weight: 850; letter-spacing: .18em; text-transform: uppercase; }
+    .ctm-main h1 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 41px; font-weight: 500; letter-spacing: 0; line-height: 1; }
+    .ctm-subtitle { margin: 10px 0 0; color: var(--ctm-muted); font-size: 12px; }
+    .ctm-toolbar { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin: 25px 0 18px; padding-bottom: 13px; border-bottom: 1px solid var(--ctm-line); }
+    .ctm-toolbar-note { color: var(--ctm-muted); font-size: 10px; }
+    .ctm-view-toggle { display: flex; gap: 2px; padding: 3px; background: #111b20; border: 1px solid var(--ctm-line); }
+    .ctm-view-toggle button { padding: 5px 8px; color: var(--ctm-muted); background: transparent; border: 0; font-size: 10px; }
+    .ctm-view-toggle button.ctm-active { color: var(--ctm-ink); background: #263840; }
+    .ctm-tree { position: relative; min-height: 383px; }
+    .ctm-branch { position: absolute; height: 1px; transform-origin: left center; background: #3c5961; }
+    .ctm-branch.ctm-active { background: var(--ctm-cyan); box-shadow: 0 0 9px rgba(94,203,194,.48); }
+    .ctm-branch.ctm-busy { background: var(--ctm-orange); box-shadow: 0 0 9px rgba(217,135,91,.36); }
+    .ctm-node { position: absolute; display: grid; place-items: center; width: 106px; min-height: 75px; padding: 8px; color: var(--ctm-muted); background: #121d23; border: 1px solid #334952; text-align: center; transform: translate(-50%, -50%); clip-path: polygon(12% 0, 88% 0, 100% 24%, 100% 76%, 88% 100%, 12% 100%, 0 76%, 0 24%); cursor: pointer; }
+    .ctm-node::before { position: absolute; inset: 4px; border: 1px solid rgba(94,203,194,.12); content: ""; pointer-events: none; }
+    .ctm-node:hover, .ctm-node.ctm-selected { color: var(--ctm-ink); border-color: var(--ctm-cyan); background: #18373a; box-shadow: 0 0 22px rgba(94,203,194,.16); }
+    .ctm-node.ctm-progress { border-color: var(--ctm-orange); background: #2b211d; }
+    .ctm-node.ctm-progress:hover, .ctm-node.ctm-progress.ctm-selected { border-color: #e4a67f; background: #432d24; }
+    .ctm-node.ctm-locked { background: #11191e; opacity: .7; }
+    .ctm-node-name { position: relative; z-index: 1; font-size: 11px; font-weight: 750; line-height: 1.15; }
+    .ctm-node-meta { position: relative; z-index: 1; margin-top: 5px; color: var(--ctm-gold); font-size: 9px; font-weight: 800; }
+    .ctm-node.ctm-root { width: 132px; min-height: 92px; color: #172019; background: var(--ctm-gold); border-color: #edcd8b; box-shadow: 0 0 35px rgba(210,174,104,.23); }
+    .ctm-node.ctm-root::before { border-color: rgba(28,35,25,.22); }
+    .ctm-node.ctm-root .ctm-node-meta { color: #5b4a2b; }
+    .ctm-node.ctm-root:hover, .ctm-node.ctm-root.ctm-selected { color: #172019; background: #ebcb84; }
+    .ctm-node.ctm-capstone { border-radius: 50%; clip-path: none; }
+    .ctm-node.ctm-capstone::before { border-radius: 50%; }
+    .ctm-node.ctm-more { width: 48px; min-height: 48px; padding: 0; color: var(--ctm-cyan); background: #10272b; border-color: var(--ctm-cyan); border-radius: 50%; clip-path: none; box-shadow: 0 0 18px rgba(94,203,194,.13); }
+    .ctm-node.ctm-more::before { inset: 4px; border-color: rgba(94,203,194,.34); border-radius: 50%; }
+    .ctm-node.ctm-more:hover { color: var(--ctm-ink); background: #1b4c4d; box-shadow: 0 0 24px rgba(94,203,194,.26); }
+    .ctm-node.ctm-more .ctm-node-name { font-size: 22px; line-height: .7; letter-spacing: 0; }
+    .ctm-node.ctm-more .ctm-node-meta { margin-top: 2px; color: var(--ctm-cyan); font-size: 8px; letter-spacing: .08em; }
+    .ctm-tree-path { display: flex; align-items: center; gap: 8px; margin-top: 15px; color: var(--ctm-muted); font-size: 10px; }
+    .ctm-tree-path button { padding: 0; color: var(--ctm-cyan); background: transparent; border: 0; font-size: 10px; cursor: pointer; }
+    .ctm-tree-path button:hover { color: var(--ctm-ink); }
+    .ctm-tree-path span { color: #496069; }
+    .ctm-tree-footer { display: flex; justify-content: space-between; gap: 14px; align-items: center; margin-top: 12px; padding-top: 14px; border-top: 1px solid var(--ctm-line); }
+    .ctm-tree-footer p { margin: 0; color: var(--ctm-muted); font-size: 10px; }
+    .ctm-progress-meter { width: 150px; height: 5px; background: #293a42; }
+    .ctm-progress-meter span { display: block; width: 68%; height: 100%; background: var(--ctm-gold); }
+
+    .ctm-detail { padding: 28px 21px; background: var(--ctm-panel); border-left: 1px solid var(--ctm-line); }
+    .ctm-detail-label { margin: 0 0 8px; color: var(--ctm-gold); font-size: 9px; font-weight: 850; letter-spacing: .17em; text-transform: uppercase; }
+    .ctm-detail h2 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 26px; font-weight: 500; line-height: 1.05; }
+    .ctm-detail-copy { margin: 12px 0 20px; color: var(--ctm-muted); font-size: 11px; line-height: 1.55; }
+    .ctm-detail-status { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-top: 1px solid var(--ctm-line); border-bottom: 1px solid var(--ctm-line); }
+    .ctm-detail-status strong { color: var(--ctm-cyan); font-size: 11px; }
+    .ctm-detail-status span { color: var(--ctm-muted); font-size: 10px; }
+    .ctm-detail-meter { height: 7px; margin: 16px 0 8px; background: #2a3a42; }
+    .ctm-detail-meter span { display: block; width: 68%; height: 100%; background: var(--ctm-cyan); box-shadow: 0 0 12px rgba(94,203,194,.28); }
+    .ctm-detail-percent { display: flex; justify-content: space-between; color: var(--ctm-muted); font-size: 10px; }
+    .ctm-detail-section { margin-top: 27px; }
+    .ctm-detail-section h3 { margin: 0 0 11px; color: var(--ctm-muted); font-size: 9px; font-weight: 850; letter-spacing: .16em; text-transform: uppercase; }
+    .ctm-branch-row { display: grid; grid-template-columns: 9px minmax(0, 1fr) auto; align-items: center; gap: 9px; padding: 10px 0; border-bottom: 1px solid #26343b; cursor: pointer; }
+    .ctm-branch-row:hover { color: var(--ctm-ink); }
+    .ctm-branch-row strong { display: block; min-width: 0; overflow: hidden; color: var(--ctm-ink); font-size: 11px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    .ctm-branch-row > span:last-child { color: var(--ctm-gold); font-size: 10px; font-variant-numeric: tabular-nums; }
+    .ctm-branch-info { display: grid; min-width: 0; gap: 6px; }
+    .ctm-branch-progress { height: 4px; overflow: hidden; background: #26373d; border-radius: 2px; }
+    .ctm-branch-progress span { display: block; width: 0; height: 100%; background: var(--ctm-cyan); border-radius: inherit; box-shadow: 0 0 8px rgba(94,203,194,.25); transition: width .25s ease; }
+    .ctm-branch-progress.ctm-gold span { background: var(--ctm-gold); box-shadow: 0 0 8px rgba(210,174,104,.25); }
+    .ctm-branch-progress.ctm-locked span { background: #6b7a80; box-shadow: none; }
+    .ctm-branch-icon { width: 9px; height: 9px; border-radius: 50%; background: var(--ctm-cyan); }
+    .ctm-branch-icon.ctm-orange { background: var(--ctm-gold); box-shadow: 0 0 8px rgba(210,174,104,.25); }
+
+    @media (max-width: 980px) {
+      #career-tree-mock { grid-template-columns: 180px minmax(0, 1fr); }
+      .ctm-detail { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 0 26px; border-top: 1px solid var(--ctm-line); border-left: 0; }
+      .ctm-detail > .ctm-detail-section { grid-column: 2; grid-row: 1 / span 3; margin-top: 0; }
+    }
+    @media (max-width: 700px) {
+      #career-tree-mock { display: block; }
+      .ctm-rail { display: none; }
+      .ctm-main { padding: 22px 17px 26px; }
+      .ctm-main h1 { font-size: 34px; }
+      .ctm-toolbar { align-items: flex-start; flex-direction: column; }
+      .ctm-tree { min-height: 490px; transform: scale(.88); transform-origin: top left; width: 113.6%; }
+      .ctm-detail { display: block; padding: 22px 17px; }
+      .ctm-detail > .ctm-detail-section { margin-top: 27px; }
+    }
+  </style>
+
+  <aside class="ctm-rail">
+    <div class="ctm-brand"><span class="ctm-sigil">RT</span><span>RIOT TITLES ATTUNE</span></div>
+    <p class="ctm-rail-label">Destino</p>
+    <div class="ctm-destination"><span class="ctm-destination-mark"></span><strong>Dios de ARAM</strong></div>
+    <p class="ctm-rail-label" style="margin-top: 33px;">Ramas clave</p>
+    <ul class="ctm-rail-list">
+      <li class="ctm-rail-item"><strong>Guerrero ARAM</strong><span>72%</span></li>
+      <li class="ctm-rail-item"><strong>Delicadeza ARAM</strong><span>41%</span></li>
+      <li class="ctm-rail-item"><strong>Campeón ARAM</strong><span>83%</span></li>
+    </ul>
+    <div class="ctm-legend">
+      <div class="ctm-legend-line"><span class="ctm-legend-dot"></span>Desbloqueado</div>
+      <div class="ctm-legend-line"><span class="ctm-legend-dot ctm-progress"></span>En progreso</div>
+      <div class="ctm-legend-line"><span class="ctm-legend-dot ctm-locked"></span>Pendiente</div>
+    </div>
+  </aside>
+
+  <main class="ctm-main">
+    <p class="ctm-kicker" id="ctm-kicker">Mapa de progreso · Imaginación</p>
+    <h1 id="ctm-main-title">Dios de ARAM</h1>
+    <p class="ctm-subtitle" id="ctm-main-subtitle">Alcanzá Maestro en Autoridad ARAM y completá sus tres ramas capstone.</p>
+    <div class="ctm-tree-path"><button id="ctm-back" type="button" hidden>← Dios de ARAM</button><span id="ctm-path-label">Raíz del árbol</span></div>
+    <div class="ctm-toolbar">
+      <span class="ctm-toolbar-note" id="ctm-toolbar-note">Seleccioná un nodo para ver su objetivo</span>
+      <div class="ctm-view-toggle"><button class="ctm-active" type="button">Árbol</button><button type="button">Lista</button></div>
+    </div>
+
+    <section class="ctm-tree" id="ctm-tree" aria-label="Árbol de dependencias de títulos"></section>
+    <div class="ctm-tree-footer"><p id="ctm-tree-summary">3 ramas principales · 18 desafíos vinculados</p><div class="ctm-progress-meter"><span id="ctm-tree-fill"></span></div><p id="ctm-tree-percent">68% hacia el título</p></div>
+  </main>
+
+  <aside class="ctm-detail" aria-live="polite">
+    <p class="ctm-detail-label">Nodo seleccionado</p>
+    <h2 id="ctm-detail-title">Dios de ARAM</h2>
+    <p id="ctm-detail-copy" class="ctm-detail-copy">El título máximo de la rama ARAM. Necesitás llevar Autoridad ARAM al nivel Maestro.</p>
+    <div class="ctm-detail-status"><strong id="ctm-detail-status">En progreso</strong><span id="ctm-detail-target">Objetivo: MASTER</span></div>
+    <div class="ctm-detail-meter"><span id="ctm-detail-fill"></span></div>
+    <div class="ctm-detail-percent"><span id="ctm-detail-value">68% completado</span><span id="ctm-detail-remaining">Faltan 32%</span></div>
+    <div class="ctm-detail-section"><h3>Dependencias directas</h3><div id="ctm-branch-list"></div></div>
+  </aside>
+
+  <script>
+    (() => {
+      const root = document.getElementById("career-tree-mock");
+      const data = {
+        god: { title: "Dios de ARAM", subtitle: "Alcanzá Maestro en Autoridad ARAM y completá sus tres ramas capstone.", copy: "El título máximo de la rama ARAM. Necesitás llevar Autoridad ARAM al nivel Maestro.", status: "En progreso", target: "Objetivo: MASTER", value: "68% completado", remaining: "Faltan 32%", fill: "68%", summary: "3 ramas principales · 18 desafíos vinculados", children: [
+          { id: "warrior", title: "Guerrero ARAM", meta: "DIAMANTE · 72%", tone: "active" },
+          { id: "finesse", title: "Delicadeza ARAM", meta: "PLATINO · 41%", tone: "progress" },
+          { id: "champion", title: "Campeón ARAM", meta: "DIAMANTE · 83%", tone: "progress" }
+        ] },
+        warrior: { title: "Guerrero ARAM", subtitle: "Una rama de combate directo con objetivos de presión y ejecución.", copy: "Dominá el combate directo y completá los desafíos de presión sobre el mapa.", status: "En progreso", target: "Objetivo: DIAMANTE", value: "72% completado", remaining: "Faltan 28%", fill: "72%", summary: "5 desafíos hijos · 3 visibles", children: [
+          { id: "dps", title: "Amenaza DPS", meta: "83 / 120", tone: "progress" },
+          { id: "double", title: "Aniquilación doble", meta: "11 / 20", tone: "progress" },
+          { id: "medicine", title: "Medicina caducada", meta: "74%", tone: "active" },
+          { id: "frontline", title: "Primera línea", meta: "39%", tone: "locked" },
+          { id: "unstoppable", title: "Imparable", meta: "18%", tone: "locked" }
+        ] },
+        finesse: { title: "Delicadeza ARAM", subtitle: "Precisión, paciencia y jugadas limpias en cada intercambio.", copy: "Convertí cada oportunidad en una jugada limpia, precisa y difícil de responder.", status: "En progreso", target: "Objetivo: DIAMANTE", value: "41% completado", remaining: "Faltan 59%", fill: "41%", summary: "5 desafíos hijos · 3 visibles", children: [
+          { id: "snow", title: "Día Nevado", meta: "7 / 25", tone: "progress" },
+          { id: "skillshot", title: "Tiro al blanco", meta: "52%", tone: "active" },
+          { id: "almost", title: "Casi impacto", meta: "28%", tone: "progress" },
+          { id: "clean", title: "Sin perder el paso", meta: "33%", tone: "locked" },
+          { id: "patience", title: "Paciencia glacial", meta: "12%", tone: "locked" }
+        ] },
+        champion: { title: "Campeón ARAM", subtitle: "Ampliá tu dominio de campeones y convertí la variedad en progreso.", copy: "Aumentá tu dominio de campeones y convertí partidas aleatorias en una colección de victorias.", status: "En progreso", target: "Objetivo: DIAMANTE", value: "83% completado", remaining: "Faltan 17%", fill: "83%", summary: "5 desafíos hijos · 3 visibles", children: [
+          { id: "champions", title: "Todos aleatorios", meta: "2 / 25", tone: "progress" },
+          { id: "impeccable", title: "Todos impecables", meta: "78%", tone: "active" },
+          { id: "no-minions", title: "No súbditos", meta: "91%", tone: "active" },
+          { id: "variety", title: "Colección amplia", meta: "64%", tone: "locked" },
+          { id: "specialist", title: "Especialista", meta: "22%", tone: "locked" }
+        ] },
+        dps: { title: "Amenaza DPS", subtitle: "Desafío hijo de Guerrero ARAM.", copy: "Mantené una presión constante hasta convertir el daño en una condición de victoria.", status: "En progreso", target: "Objetivo: DIAMANTE", value: "69% completado", remaining: "Faltan 37 puntos", fill: "69%", children: [] },
+        double: { title: "Aniquilación doble", subtitle: "Desafío hijo de Guerrero ARAM.", copy: "Encontrá la ventana perfecta para encadenar dos bajas antes de que termine la pelea.", status: "En progreso", target: "Objetivo: GOLD", value: "55% completado", remaining: "Faltan 9", fill: "55%", children: [] },
+        medicine: { title: "Medicina caducada", subtitle: "Desafío hijo de Guerrero ARAM.", copy: "Superá a un rival que acaba de recuperar vida y cerrá el intercambio a tiempo.", status: "En progreso", target: "Objetivo: GOLD", value: "74% completado", remaining: "Faltan 26%", fill: "74%", children: [] },
+        snow: { title: "Día Nevado", subtitle: "Desafío hijo de Delicadeza ARAM.", copy: "Todavía no hay suficiente progreso medible en este desafío.", status: "Sin comenzar", target: "Objetivo: GOLD", value: "28% completado", remaining: "Faltan 18", fill: "28%", children: [] },
+        champions: { title: "Todos aleatorios", subtitle: "Desafío hijo de Campeón ARAM.", copy: "Completá objetivos con una variedad amplia de campeones en ARAM.", status: "Sin comenzar", target: "Objetivo: GOLD", value: "8% completado", remaining: "Faltan 23", fill: "8%", children: [] }
+      };
+      const rootTree = root.querySelector("#ctm-tree");
+      const mainTitle = root.querySelector("#ctm-main-title");
+      const mainSubtitle = root.querySelector("#ctm-main-subtitle");
+      const pathLabel = root.querySelector("#ctm-path-label");
+      const back = root.querySelector("#ctm-back");
+      const treeSummary = root.querySelector("#ctm-tree-summary");
+      const treeFill = root.querySelector("#ctm-tree-fill");
+      const treePercent = root.querySelector("#ctm-tree-percent");
+      let currentRoot = "god";
+      const expandedRoots = new Set();
+      const title = root.querySelector("#ctm-detail-title");
+      const copy = root.querySelector("#ctm-detail-copy");
+      const status = root.querySelector("#ctm-detail-status");
+      const target = root.querySelector("#ctm-detail-target");
+      const fill = root.querySelector("#ctm-detail-fill");
+      const value = root.querySelector("#ctm-detail-value");
+      const remaining = root.querySelector("#ctm-detail-remaining");
+      const branches = root.querySelector("#ctm-branch-list");
+      function renderDetail(key) {
+        const nodeLabel = root.querySelector(`[data-ctm-node="${key}"] .ctm-node-name`);
+        const item = data[key] || { title: nodeLabel ? nodeLabel.textContent : key, copy: "Desafío hijo de la rama seleccionada.", status: "Sin comenzar", target: "Objetivo: GOLD", value: "0% completado", remaining: "Faltan todos los objetivos", fill: "0%", children: [] };
+        title.textContent = item.title;
+        copy.textContent = item.copy;
+        status.textContent = item.status;
+        target.textContent = item.target;
+        fill.style.width = item.fill;
+        value.textContent = item.value;
+        remaining.textContent = item.remaining;
+        branches.replaceChildren();
+        const dependencies = item.children.length ? item.children : [{ title: "Sin dependencias hijas", meta: "Nodo final", tone: "" }];
+        dependencies.slice(0, 4).forEach(({ title: name, meta: progress, tone }) => {
+          const row = document.createElement("button");
+          row.type = "button";
+          row.className = "ctm-branch-row";
+          const dot = document.createElement("span");
+          dot.className = `ctm-branch-icon ${tone === "progress" ? "ctm-orange" : ""}`;
+          const label = document.createElement("strong");
+          label.textContent = name;
+          const info = document.createElement("span");
+          info.className = "ctm-branch-info";
+          const meter = document.createElement("span");
+          const amountMatch = progress.match(/(\d+)\s*\/\s*(\d+)/);
+          const percentMatch = progress.match(/(\d+)%/);
+          const percent = amountMatch ? Math.min(100, Math.round(Number(amountMatch[1]) / Number(amountMatch[2]) * 100)) : (percentMatch ? Number(percentMatch[1]) : 0);
+          meter.className = `ctm-branch-progress ${tone === "locked" ? "ctm-locked" : percent >= 70 ? "ctm-gold" : ""}`;
+          const meterFill = document.createElement("span");
+          meterFill.style.width = `${percent}%`;
+          meter.append(meterFill);
+          info.append(label, meter);
+          const amount = document.createElement("span");
+          amount.textContent = progress;
+          row.append(dot, info, amount);
+          branches.append(row);
+        });
+      }
+      function addLine(x1, y1, x2, y2, tone) {
+        const line = document.createElement("span");
+        line.className = `ctm-branch ctm-${tone || "active"}`;
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        line.style.left = `${x1}%`;
+        line.style.top = `${y1}%`;
+        line.style.width = `${Math.hypot(dx, dy)}%`;
+        line.style.transform = `rotate(${Math.atan2(dy, dx) * 180 / Math.PI}deg)`;
+        rootTree.append(line);
+      }
+      function addNode(node, x, y, options = {}) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `ctm-node ${options.root ? "ctm-root" : "ctm-capstone"} ${node.tone === "progress" ? "ctm-progress" : ""} ${node.tone === "locked" ? "ctm-locked" : ""} ${options.more ? "ctm-more" : ""}`;
+        button.style.left = `${x}%`;
+        button.style.top = `${y}%`;
+        button.title = options.more ? "Ver más desafíos" : node.title;
+        if (options.more) button.dataset.ctmOpenTree = options.target || currentRoot;
+        button.dataset.ctmNode = node.id || currentRoot;
+        const content = document.createElement("span");
+        const label = document.createElement("span");
+        label.className = "ctm-node-name";
+        label.textContent = options.more ? "…" : node.title;
+        const meta = document.createElement("span");
+        meta.className = "ctm-node-meta";
+        meta.textContent = options.more ? "VER MÁS" : node.meta;
+        content.append(label, meta);
+        button.append(content);
+        rootTree.append(button);
+        return button;
+      }
+      function renderTree(key) {
+        const item = data[key];
+        currentRoot = key;
+        rootTree.replaceChildren();
+        const rootX = 50;
+        const rootY = 15;
+        const childY = 50;
+        const visibleChildren = expandedRoots.has(key) ? item.children : item.children.slice(0, 3);
+        const positions = expandedRoots.has(key) ? [18, 50, 82, 30, 70] : (key === "god" ? [24, 50, 76] : [18, 50, 82]);
+        addNode({ id: key, title: item.title, meta: `${item.target.replace("Objetivo: ", "")} · ${item.fill}` }, rootX, rootY, { root: true });
+        visibleChildren.forEach((child, index) => {
+          const row = expandedRoots.has(key) && index > 2 ? 77 : childY;
+          const x = positions[index];
+          addLine(rootX, rootY + 5, x, row - 5, child.tone === "progress" ? "busy" : "active");
+          addNode(child, x, row);
+        });
+        if (key === "god") {
+          [24, 50, 76].forEach((x, index) => {
+            addLine(x, childY + 8, x, 78, "active");
+            addNode({ id: `more-${item.children[index].id}` }, x, 80, { more: true, target: item.children[index].id });
+          });
+        } else if (item.children.length > 3 && !expandedRoots.has(key)) {
+          addLine(rootX, rootY + 5, 92, childY - 5, "active");
+          addNode({ id: `more-${key}` }, 92, childY, { more: true, target: key });
+        }
+        root.querySelectorAll(".ctm-node").forEach((node) => node.classList.toggle("ctm-selected", node.dataset.ctmNode === key));
+        mainTitle.textContent = item.title;
+        mainSubtitle.textContent = item.subtitle;
+        pathLabel.textContent = key === "god" ? "Raíz del árbol" : `Dentro de ${data.god.title}`;
+        back.hidden = key === "god";
+        treeSummary.textContent = item.summary || `${item.children.length} dependencias directas`;
+        treeFill.style.width = item.fill;
+        treePercent.textContent = `${item.fill} hacia el título`;
+        renderDetail(key);
+      }
+      rootTree.addEventListener("click", (event) => {
+        const more = event.target.closest("[data-ctm-open-tree]");
+        if (more) {
+          const target = more.dataset.ctmOpenTree;
+          if (currentRoot === "god") {
+            expandedRoots.delete(target);
+            renderTree(target);
+          } else {
+            expandedRoots.add(currentRoot);
+            renderTree(currentRoot);
+          }
+          return;
+        }
+        const node = event.target.closest("[data-ctm-node]");
+        if (node) {
+          root.querySelectorAll(".ctm-node").forEach((item) => item.classList.toggle("ctm-selected", item === node));
+          renderDetail(node.dataset.ctmNode);
+        }
+      });
+      back.addEventListener("click", () => renderTree("god"));
+      renderTree("god");
+    })();
+  </script>
+</div>
