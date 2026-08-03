@@ -334,6 +334,7 @@ export function App() {
     const title = data?.titles.find((item) => item.titleId === titleId);
     setSelectedId(title?.requirements[0] ? String(title.requirements[0].challengeId) : '');
     setView('tree');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   async function openTree(titleId = featured?.titleId) {
