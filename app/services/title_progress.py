@@ -139,7 +139,11 @@ def build_requirement(requirement: CatalogRequirement, player: PlayerChallenge |
     return output, status, unlocked, progress_percent, progress_is_estimate
 
 
-def build_title(title: CatalogTitle, players: dict[int, PlayerChallenge]) -> TitleProgressOut:
+def build_title(
+    title: CatalogTitle,
+    players: dict[int, PlayerChallenge],
+    children_by_parent: dict[int, list[int]] | None = None,
+) -> TitleProgressOut:
     requirements = []
     statuses = []
     unlocked_values = []
@@ -147,6 +151,8 @@ def build_title(title: CatalogTitle, players: dict[int, PlayerChallenge]) -> Tit
     estimates = []
     for requirement in title.requirements:
         output, status, unlocked, progress, estimate = build_requirement(requirement, players.get(requirement.challenge_id))
+        if children_by_parent is not None:
+            output = output.model_copy(update={"hasChildren": bool(children_by_parent.get(requirement.challenge_id))})
         requirements.append(output)
         statuses.append(status)
         unlocked_values.append(unlocked)
@@ -235,7 +241,11 @@ class TitleProgressService:
             self.catalog.get_snapshot(),
         )
         player_challenges, player_fetched_at = player_result
-        titles = [build_title(title, player_challenges) for title in catalog_snapshot.titles]
+        children_by_parent = {}
+        for challenge in catalog_snapshot.challenge_graph.values():
+            if challenge.parent_challenge_id is not None:
+                children_by_parent.setdefault(challenge.parent_challenge_id, []).append(challenge.challenge_id)
+        titles = [build_title(title, player_challenges, children_by_parent) for title in catalog_snapshot.titles]
         return TitleProgressResponse(
             player=PlayerOut(
                 gameName=game_name,
@@ -348,12 +358,12 @@ class TitleProgressService:
             from app.errors import TitleNotFoundError
 
             raise TitleNotFoundError()
-        title_progress = build_title(title, player_challenges)
         graph = catalog_snapshot.challenge_graph
         children_by_parent: dict[int, list[int]] = {}
         for challenge in graph.values():
             if challenge.parent_challenge_id is not None:
                 children_by_parent.setdefault(challenge.parent_challenge_id, []).append(challenge.challenge_id)
+        title_progress = build_title(title, player_challenges, children_by_parent)
         roots = []
         for requirement in title.requirements:
             challenge = graph.get(requirement.challenge_id)

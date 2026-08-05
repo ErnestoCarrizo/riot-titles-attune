@@ -31,6 +31,7 @@ export interface Requirement {
   progressDirection: 'increase' | 'decrease';
   iconUrl: string | null;
   achievedTime: string | null;
+  hasChildren: boolean;
 }
 
 export interface TitleProgress {

@@ -26,6 +26,7 @@ class RequirementOut(BaseModel):
     progressDirection: Literal["increase", "decrease"]
     iconUrl: str | None
     achievedTime: str | None
+    hasChildren: bool = False
 
 
 class TitleProgressOut(BaseModel):

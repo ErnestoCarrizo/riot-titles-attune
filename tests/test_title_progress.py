@@ -15,6 +15,12 @@ def test_normal_progress_and_remaining():
     assert result.requirements[0].progressDirection == "increase"
 
 
+def test_requirement_exposes_when_it_has_child_challenges():
+    title = CatalogTitle("tree", "Árbol", (requirement(challenge_id=10),))
+    result = build_title(title, {}, {10: [11]})
+    assert result.requirements[0].hasChildren is True
+
+
 def test_reverse_progress_is_estimated_and_requires_decrease():
     title = CatalogTitle("reverse", "Objetivo", (requirement(reverse=True, target=2, tier="GOLD", start=6),))
     result = build_title(title, parse_player_challenges({"challenges": [{"challengeId": 1, "level": "SILVER", "value": 6}]}))

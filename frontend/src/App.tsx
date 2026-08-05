@@ -40,7 +40,7 @@ function toBranches(title: TitleProgress): Branch[] {
       icon: iconNames[index % iconNames.length],
       status: branchStatus(title, progress),
       description: requirement.challengeDescription,
-      hasChildren: title.requirements.length > 1,
+      hasChildren: requirement.hasChildren,
       currentValue: requirement.currentValue,
       targetValue: requirement.targetValue,
       remainingValue: requirement.remainingValue,
