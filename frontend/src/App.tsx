@@ -238,7 +238,7 @@ function CatalogHome({ data, onSelectTitle, onNewQuery }: { data: ProgressRespon
       <Sidebar branches={[]} destination="Catalogo" progress={data.summary.completionPercentage} onNewQuery={onNewQuery} />
       <main className="main-content">
         <PageHeader view="list" onViewChange={() => undefined} title="Tus titulos" subtitle="Elegi un titulo para explorar su arbol de progreso y sus objetivos." showViewToggle={false} />
-        <ProgressSummary progress={Math.round(data.summary.completionPercentage)} branchCount={data.titles.length} challengeCount={data.titles.reduce((total, title) => total + title.requirements.length, 0)} />
+        <ProgressSummary progress={Math.round(data.summary.completionPercentage)} branchCount={data.titles.length} challengeCount={data.titles.reduce((total, title) => total + title.requirements.length, 0)} playerName={data.player.gameName} />
         <CatalogSection titles={data.titles} onOpenTree={onSelectTitle} />
       </main>
     </div>
@@ -367,7 +367,7 @@ export function App() {
       <Sidebar branches={branches} destination={featured.titleName} progress={activeNode?.progressPercent ?? featured.progressPercent ?? 0} onNewQuery={() => { setData(null); setActiveNode(null); setSelectedTitleId(null); }} />
       <main className="main-content">
         <PageHeader view={view} onViewChange={setView} title={displayTitle} subtitle={displayDescription} onBack={activeNode ? () => { setActiveNode(null); setSelectedId(featured.requirements[0] ? String(featured.requirements[0].challengeId) : ''); } : undefined} backLabel={featured.titleName} />
-        <ProgressSummary progress={progress} branchCount={branches.length} challengeCount={activeNode?.children.length ?? featured.requirements.length} />
+        <ProgressSummary progress={progress} branchCount={branches.length} challengeCount={activeNode?.children.length ?? featured.requirements.length} playerName={data.player.gameName} />
         {view === 'tree' ? <SkillTree branches={branches} selectedId={selectedId} onSelect={setSelectedId} title={displayTitle} progress={progress} rank={displayRank} onOpenTree={(nodeId) => openNode(featured.titleId, nodeId)} /> : <section className="list-view" aria-label="Lista de ramas">{branches.map((branch) => <BranchCard key={branch.id} branch={branch} isSelected={selectedId === branch.id} onSelect={setSelectedId} onOpenTree={() => openNode(featured.titleId, branch.id)} />)}</section>}
         <DetailPanel title={activeNode?.challengeName || selectedBranch?.name || featured.titleName} rank={activeNode ? displayRank : selectedBranch?.rank || displayRank} description={activeNode?.challengeDescription || selectedBranch?.description || 'El título máximo de la rama ARAM. Completá sus dependencias directas para alcanzar el rango requerido.'} branches={branches} />
         <p className="footer-note"><Icon name="info" size={17} />Completá las ramas al rango requerido para desbloquear “{featured.titleName}”.</p>
