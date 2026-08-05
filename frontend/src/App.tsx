@@ -7,6 +7,8 @@ import { ProgressSummary } from './components/ProgressSummary';
 import { Sidebar } from './components/Sidebar';
 import { SkillTree } from './components/SkillTree';
 import { ProgressBar } from './components/ProgressBar';
+import { ComparisonForm, ComparisonPanel } from './components/ComparisonPanel';
+import type { ReactNode } from 'react';
 import type { Branch, ProgressResponse, Requirement, TitleProgress, TreeNode, TreeResponse } from './types';
 
 const iconNames = ['sword', 'leaf', 'trophy'] as const;
@@ -232,12 +234,14 @@ function CatalogSection({ titles, onOpenTree }: { titles: TitleProgress[]; onOpe
   );
 }
 
-function CatalogHome({ data, onSelectTitle, onNewQuery }: { data: ProgressResponse; onSelectTitle: (titleId: string) => void; onNewQuery: () => void }) {
+function CatalogHome({ data, onSelectTitle, onNewQuery, comparisonAction, comparisonForm, comparisonPanel }: { data: ProgressResponse; onSelectTitle: (titleId: string) => void; onNewQuery: () => void; comparisonAction: ReactNode; comparisonForm: ReactNode; comparisonPanel: ReactNode }) {
   return (
     <div className="app-shell" id="top">
       <Sidebar branches={[]} destination="Catalogo" progress={data.summary.completionPercentage} onNewQuery={onNewQuery} />
       <main className="main-content">
-        <PageHeader view="list" onViewChange={() => undefined} title="Tus titulos" subtitle="Elegi un titulo para explorar su arbol de progreso y sus objetivos." showViewToggle={false} />
+        <PageHeader view="list" onViewChange={() => undefined} title="Tus titulos" subtitle="Elegi un titulo para explorar su arbol de progreso y sus objetivos." showViewToggle={false} actions={comparisonAction} />
+        {comparisonForm}
+        {comparisonPanel}
         <ProgressSummary progress={Math.round(data.summary.completionPercentage)} branchCount={data.titles.length} challengeCount={data.titles.reduce((total, title) => total + title.requirements.length, 0)} playerName={data.player.gameName} />
         <CatalogSection titles={data.titles} onOpenTree={onSelectTitle} />
       </main>
@@ -282,6 +286,12 @@ export function App() {
   const [error, setError] = useState('');
   const [tree, setTree] = useState<TreeResponse | null>(null);
   const [activeNode, setActiveNode] = useState<TreeNode | null>(null);
+  const [comparisonData, setComparisonData] = useState<ProgressResponse | null>(null);
+  const [comparisonRiotId, setComparisonRiotId] = useState('');
+  const [comparisonPlatform, setComparisonPlatform] = useState(platform);
+  const [comparisonLoading, setComparisonLoading] = useState(false);
+  const [comparisonError, setComparisonError] = useState('');
+  const [showComparisonForm, setShowComparisonForm] = useState(false);
 
   const featured = data?.titles.find((title) => title.titleId === selectedTitleId);
   const branches = useMemo(() => activeNode ? branchesFromTreeNode(activeNode) : featured ? toBranches(featured) : [], [activeNode, featured]);
@@ -298,26 +308,56 @@ export function App() {
     }).catch(() => setError('No se pudieron cargar los servidores.'));
   }, [platform]);
 
+  async function requestProgress(queryRiotId: string, queryPlatform: string): Promise<ProgressResponse> {
+    const response = await fetch(`/api/title-progress?riot_id=${encodeURIComponent(queryRiotId)}&platform=${encodeURIComponent(queryPlatform)}`);
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.detail || 'No pudimos completar la consulta.');
+    return payload;
+  }
+
   async function submitQuery(event: FormEvent) {
     event.preventDefault();
     if (!riotId.trim().includes('#')) { setError('Ingresá un Riot ID válido con el formato Nombre#TAG.'); return; }
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`/api/title-progress?riot_id=${encodeURIComponent(riotId.trim())}&platform=${encodeURIComponent(platform)}`);
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.detail || 'No pudimos completar la consulta.');
+      const payload = await requestProgress(riotId.trim(), platform);
       localStorage.setItem('riot-id', riotId.trim());
       localStorage.setItem('riot-platform', platform);
       setData(payload);
       setActiveNode(null);
       setSelectedTitleId(null);
       setSelectedId('');
+      setComparisonData(null);
+      setComparisonError('');
+      setShowComparisonForm(false);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'No pudimos completar la consulta.');
     } finally {
       setLoading(false);
     }
+  }
+
+  async function submitComparison(event: FormEvent) {
+    event.preventDefault();
+    if (!comparisonRiotId.trim().includes('#')) { setComparisonError('Ingresá un Riot ID válido con el formato Nombre#TAG.'); return; }
+    if (!data) return;
+    setComparisonLoading(true);
+    setComparisonError('');
+    try {
+      setComparisonData(await requestProgress(comparisonRiotId.trim(), comparisonPlatform));
+      setShowComparisonForm(false);
+    } catch (requestError) {
+      setComparisonError(requestError instanceof Error ? requestError.message : 'No pudimos cargar el segundo jugador.');
+    } finally {
+      setComparisonLoading(false);
+    }
+  }
+
+  function closeComparison() {
+    setComparisonData(null);
+    setComparisonError('');
+    setShowComparisonForm(false);
   }
 
   async function requestTree(titleId: string): Promise<TreeResponse> {
@@ -359,14 +399,20 @@ export function App() {
     }
   }
 
+  const comparisonAction = data ? <button className="compare-trigger" type="button" onClick={() => setShowComparisonForm((visible) => !visible)}><Icon name="compare" size={17} />{comparisonData ? 'Cambiar comparación' : 'Comparar jugador'}</button> : null;
+  const comparisonForm = data && showComparisonForm ? <ComparisonForm riotId={comparisonRiotId} platform={comparisonPlatform} platforms={platforms} loading={comparisonLoading} error={comparisonError} onRiotIdChange={setComparisonRiotId} onPlatformChange={setComparisonPlatform} onSubmit={submitComparison} /> : null;
+  const comparisonPanel = data && comparisonData ? <ComparisonPanel primary={data} secondary={comparisonData} selectedTitleId={featured?.titleId ?? null} onSelectTitle={selectTitle} onClose={closeComparison} /> : null;
+
   if (!data) return <QueryScreen riotId={riotId} platform={platform} platforms={platforms} loading={loading} error={error} onRiotIdChange={setRiotId} onPlatformChange={setPlatform} onSubmit={submitQuery} />;
-  if (!featured) return <CatalogHome data={data} onSelectTitle={selectTitle} onNewQuery={() => { setData(null); setActiveNode(null); setSelectedTitleId(null); }} />;
+  if (!featured) return <CatalogHome data={data} onSelectTitle={selectTitle} onNewQuery={() => { setData(null); setActiveNode(null); setSelectedTitleId(null); closeComparison(); }} comparisonAction={comparisonAction} comparisonForm={comparisonForm} comparisonPanel={comparisonPanel} />;
 
   return (
     <div className="app-shell" id="top">
-      <Sidebar branches={branches} destination={featured.titleName} progress={activeNode?.progressPercent ?? featured.progressPercent ?? 0} onNewQuery={() => { setData(null); setActiveNode(null); setSelectedTitleId(null); }} />
+      <Sidebar branches={branches} destination={featured.titleName} progress={activeNode?.progressPercent ?? featured.progressPercent ?? 0} onNewQuery={() => { setData(null); setActiveNode(null); setSelectedTitleId(null); closeComparison(); }} />
       <main className="main-content">
-        <PageHeader view={view} onViewChange={setView} title={displayTitle} subtitle={displayDescription} onBack={activeNode ? () => { setActiveNode(null); setSelectedId(featured.requirements[0] ? String(featured.requirements[0].challengeId) : ''); } : undefined} backLabel={featured.titleName} />
+        <PageHeader view={view} onViewChange={setView} title={displayTitle} subtitle={displayDescription} onBack={activeNode ? () => { setActiveNode(null); setSelectedId(featured.requirements[0] ? String(featured.requirements[0].challengeId) : ''); } : undefined} backLabel={featured.titleName} actions={comparisonAction} />
+        {comparisonForm}
+        {comparisonPanel}
         <ProgressSummary progress={progress} branchCount={branches.length} challengeCount={activeNode?.children.length ?? featured.requirements.length} playerName={data.player.gameName} />
         {view === 'tree' ? <SkillTree branches={branches} selectedId={selectedId} onSelect={setSelectedId} title={displayTitle} progress={progress} rank={displayRank} onOpenTree={(nodeId) => openNode(featured.titleId, nodeId)} /> : <section className="list-view" aria-label="Lista de ramas">{branches.map((branch) => <BranchCard key={branch.id} branch={branch} isSelected={selectedId === branch.id} onSelect={setSelectedId} onOpenTree={() => openNode(featured.titleId, branch.id)} />)}</section>}
         <DetailPanel title={activeNode?.challengeName || selectedBranch?.name || featured.titleName} rank={activeNode ? displayRank : selectedBranch?.rank || displayRank} description={activeNode?.challengeDescription || selectedBranch?.description || 'El título máximo de la rama ARAM. Completá sus dependencias directas para alcanzar el rango requerido.'} branches={branches} />

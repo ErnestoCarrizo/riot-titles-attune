@@ -1,6 +1,6 @@
 export type BranchStatus = 'unlocked' | 'in-progress' | 'pending';
 export type BranchTone = 'cyan' | 'orange' | 'lime';
-export type IconName = 'diamond' | 'sword' | 'feather' | 'leaf' | 'trophy' | 'tree' | 'list' | 'check' | 'info' | 'arrow-left' | 'chevron-right';
+export type IconName = 'diamond' | 'sword' | 'feather' | 'leaf' | 'trophy' | 'tree' | 'list' | 'compare' | 'check' | 'info' | 'arrow-left' | 'chevron-right';
 
 export interface Branch {
   id: string;

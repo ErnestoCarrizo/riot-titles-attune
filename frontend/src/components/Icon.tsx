@@ -31,6 +31,7 @@ export function Icon({ name, size = 20, className, title }: Props) {
     trophy: <><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"/><path d="M6 6H3v1a4 4 0 0 0 4 4"/><path d="M18 6h3v1a4 4 0 0 1-4 4"/><path d="M12 12v5"/><path d="M8 21h8"/><path d="M9 17h6v4H9z"/></>,
     tree: <><path d="M12 3v18"/><path d="m5 8 7-5 7 5"/><path d="m5 14 7-5 7 5"/><path d="M7 21h10"/></>,
     list: <><path d="M9 6h11"/><path d="M9 12h11"/><path d="M9 18h11"/><path d="M4 6h.01"/><path d="M4 12h.01"/><path d="M4 18h.01"/></>,
+    compare: <><path d="M7 4v16"/><path d="M17 4v16"/><path d="M4 7h6"/><path d="M14 17h6"/><path d="m7 4-3 3 3 3"/><path d="m17 20 3-3-3-3"/></>,
     check: <path d="m5 12 4 4L19 6"/>,
     info: <><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></>,
     'arrow-left': <><path d="m15 18-6-6 6-6"/><path d="M9 12h10"/></>,
