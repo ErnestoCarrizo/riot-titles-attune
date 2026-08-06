@@ -67,6 +67,11 @@ function differenceLabel(primaryPercent: number | null, secondaryPercent: number
   return `${difference >= 0 ? '+' : ''}${difference} puntos para ${owner}`;
 }
 
+function titleTooltip(title: TitleProgress): string {
+  const descriptions = title.requirements.map((requirement) => requirement.challengeDescription).filter(Boolean);
+  return descriptions.join(' ') || `Completá los objetivos de ${title.titleName}.`;
+}
+
 export function ComparisonForm({ riotId, platform, platforms, loading, error, onRiotIdChange, onPlatformChange, onSubmit }: FormProps) {
   return (
     <form className="comparison-form" onSubmit={onSubmit}>
@@ -112,14 +117,15 @@ export function ComparisonPanel({ primary, secondary, selectedTitleId, activeNod
           const other = secondaryTitles.get(title.titleId);
           const primaryPercent = titlePercent(title);
           const secondaryPercent = titlePercent(other);
-          return <button className={`comparison-row ${selectedTitleId === title.titleId ? 'is-selected' : ''}`} type="button" role="listitem" key={title.titleId} onClick={() => onSelectTitle(title.titleId)}><span className="comparison-row__title"><strong>{title.titleName}</strong><small>{differenceLabel(primaryPercent, secondaryPercent, primary.player.gameName)}</small></span><Score percent={primaryPercent} status={title.status} tone="cyan" owner={primary.player.gameName} /><Score percent={secondaryPercent} status={other?.status} tone="orange" owner={secondary.player.gameName} /><Icon name="chevron-right" size={17} /></button>;
+          return <button className={`comparison-row ${selectedTitleId === title.titleId ? 'is-selected' : ''}`} type="button" role="listitem" key={title.titleId} onClick={() => onSelectTitle(title.titleId)}><span className="comparison-row__title comparison-row__title--tooltip" data-tooltip={titleTooltip(title)} title={titleTooltip(title)}><strong>{title.titleName}</strong><small>{differenceLabel(primaryPercent, secondaryPercent, primary.player.gameName)}</small></span><Score percent={primaryPercent} status={title.status} tone="cyan" owner={primary.player.gameName} /><Score percent={secondaryPercent} status={other?.status} tone="orange" owner={secondary.player.gameName} /><Icon name="chevron-right" size={17} /></button>;
         }) : focusedTreeReady && nodeRows.length ? nodeRows.map((node) => {
           const other = secondaryTree ? findTreeNode(secondaryTree.roots, String(node.challengeId)) : undefined;
           const primaryPercent = nodePercent(node);
           const secondaryPercent = nodePercent(other);
           const canAdvance = node.children.length > 0;
-          return <button className={`comparison-row comparison-row--node ${canAdvance ? '' : 'comparison-row--leaf'}`} type="button" role="listitem" key={node.challengeId} onClick={() => { if (canAdvance) onAdvanceNode(String(node.challengeId)); }} aria-label={`${node.challengeName}. ${canAdvance ? 'Avanzar a sus hijos' : 'Objetivo final'}`}><span className="comparison-row__title"><strong>{node.challengeName}</strong><small>{differenceLabel(primaryPercent, secondaryPercent, primary.player.gameName)}</small></span><Score percent={primaryPercent} status={node.status} tone="cyan" owner={primary.player.gameName} /><Score percent={secondaryPercent} status={other?.status} tone="orange" owner={secondary.player.gameName} />{canAdvance ? <Icon name="chevron-right" size={17} /> : <span aria-hidden="true" />}</button>;
-        }) : contextual && !treeLoading && focusedTitle ? <button className="comparison-row is-selected" type="button" role="listitem" onClick={() => onSelectTitle(focusedTitle.titleId)}><span className="comparison-row__title"><strong>{focusedTitle.titleName}</strong><small>{differenceLabel(titlePercent(focusedTitle), titlePercent(focusedSecondaryTitle), primary.player.gameName)}</small></span><Score percent={titlePercent(focusedTitle)} status={focusedTitle.status} tone="cyan" owner={primary.player.gameName} /><Score percent={titlePercent(focusedSecondaryTitle)} status={focusedSecondaryTitle?.status} tone="orange" owner={secondary.player.gameName} /><span aria-hidden="true" /></button> : null}
+          const tooltip = node.challengeDescription || `Completá ${node.challengeName} para alcanzar ${node.targetTier}.`;
+          return <button className={`comparison-row comparison-row--node ${canAdvance ? '' : 'comparison-row--leaf'}`} type="button" role="listitem" key={node.challengeId} onClick={() => { if (canAdvance) onAdvanceNode(String(node.challengeId)); }} aria-label={`${node.challengeName}. ${canAdvance ? 'Avanzar a sus hijos' : 'Objetivo final'}`}><span className="comparison-row__title comparison-row__title--tooltip" data-tooltip={tooltip} title={tooltip}><strong>{node.challengeName}</strong><small>{differenceLabel(primaryPercent, secondaryPercent, primary.player.gameName)}</small></span><Score percent={primaryPercent} status={node.status} tone="cyan" owner={primary.player.gameName} /><Score percent={secondaryPercent} status={other?.status} tone="orange" owner={secondary.player.gameName} />{canAdvance ? <Icon name="chevron-right" size={17} /> : <span aria-hidden="true" />}</button>;
+        }) : contextual && !treeLoading && focusedTitle ? <button className="comparison-row is-selected" type="button" role="listitem" onClick={() => onSelectTitle(focusedTitle.titleId)}><span className="comparison-row__title comparison-row__title--tooltip" data-tooltip={titleTooltip(focusedTitle)} title={titleTooltip(focusedTitle)}><strong>{focusedTitle.titleName}</strong><small>{differenceLabel(titlePercent(focusedTitle), titlePercent(focusedSecondaryTitle), primary.player.gameName)}</small></span><Score percent={titlePercent(focusedTitle)} status={focusedTitle.status} tone="cyan" owner={primary.player.gameName} /><Score percent={titlePercent(focusedSecondaryTitle)} status={focusedSecondaryTitle?.status} tone="orange" owner={secondary.player.gameName} /><span aria-hidden="true" /></button> : null}
       </div>
     </section>
   );
