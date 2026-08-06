@@ -137,12 +137,8 @@ h1 { margin-bottom: 8px; font-size: clamp(44px, 5vw, 66px); line-height: .98; le
 .comparison-row:hover, .comparison-row.is-selected { background: rgba(23,116,124,.15); border-color: rgba(66,222,217,.48); }
 .comparison-row--leaf { cursor: default; }
 .comparison-row--leaf:hover { background: rgba(255,255,255,.025); border-color: rgba(150,183,193,.14); }
+.comparison-tooltip { position: fixed; z-index: 1000; width: min(320px, calc(100vw - 32px)); padding: 10px 12px; color: var(--text); background: #07131b; border: 1px solid var(--cyan); border-radius: 6px; box-shadow: 0 12px 28px rgba(0,0,0,.55); font-size: 11px; font-weight: 500; line-height: 1.45; pointer-events: none; }
 .comparison-row__title { min-width: 0; }
-.comparison-row__title--tooltip { position: relative; }
-.comparison-row__title--tooltip::after { position: absolute; left: 0; top: calc(100% + 8px); z-index: 20; width: min(320px, calc(100vw - 44px)); padding: 10px 12px; color: var(--text); background: #07131b; border: 1px solid var(--cyan); border-radius: 6px; box-shadow: 0 12px 28px rgba(0,0,0,.45); content: attr(data-tooltip); font-size: 11px; font-weight: 500; line-height: 1.45; opacity: 0; pointer-events: none; transform: translateY(-4px); transition: opacity .16s ease, transform .16s ease; white-space: normal; }
-.comparison-row__title--tooltip:hover::after { opacity: 1; transform: translateY(0); }
-.comparison-row:hover .comparison-row__title--tooltip::after { opacity: 1; transform: translateY(0); }
-.comparison-row:focus-visible .comparison-row__title--tooltip::after, .comparison-row__title--tooltip:focus-within::after { opacity: 1; transform: translateY(0); }
 .comparison-row__title strong, .comparison-row__title small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .comparison-row__title strong { font-size: 12px; }
 .comparison-row__title small { margin-top: 5px; color: var(--gold); font-size: 9px; }
