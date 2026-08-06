@@ -35,6 +35,7 @@ export function Icon({ name, size = 20, className, title }: Props) {
     check: <path d="m5 12 4 4L19 6"/>,
     info: <><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></>,
     'arrow-left': <><path d="m15 18-6-6 6-6"/><path d="M9 12h10"/></>,
+    'chevron-left': <path d="m15 18-6-6 6-6"/>,
     'chevron-right': <path d="m9 18 6-6-6-6"/>,
   };
 

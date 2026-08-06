@@ -234,12 +234,12 @@ function CatalogSection({ titles, onOpenTree }: { titles: TitleProgress[]; onOpe
   );
 }
 
-function CatalogHome({ data, onSelectTitle, onNewQuery, comparisonAction, comparisonForm, comparisonPanel }: { data: ProgressResponse; onSelectTitle: (titleId: string) => void; onNewQuery: () => void; comparisonAction: ReactNode; comparisonForm: ReactNode; comparisonPanel: ReactNode }) {
+function CatalogHome({ data, onSelectTitle, onNewQuery, comparisonAction, comparisonForm, comparisonPanel, sidebarCollapsed, onToggleSidebar }: { data: ProgressResponse; onSelectTitle: (titleId: string) => void; onNewQuery: () => void; comparisonAction: ReactNode; comparisonForm: ReactNode; comparisonPanel: ReactNode; sidebarCollapsed: boolean; onToggleSidebar: () => void }) {
   return (
-    <div className="app-shell" id="top">
-      <Sidebar branches={[]} destination="Catalogo" progress={data.summary.completionPercentage} onNewQuery={onNewQuery} />
+    <div className={`app-shell ${sidebarCollapsed ? 'app-shell--sidebar-collapsed' : ''}`} id="top">
+      <Sidebar branches={[]} destination="Catalogo" progress={data.summary.completionPercentage} onNewQuery={onNewQuery} onCollapse={onToggleSidebar} />
       <main className="main-content">
-        <PageHeader view="list" onViewChange={() => undefined} title="Tus titulos" subtitle="Elegi un titulo para explorar su arbol de progreso y sus objetivos." showViewToggle={false} actions={comparisonAction} />
+        <PageHeader view="list" onViewChange={() => undefined} title="Tus titulos" subtitle="Elegi un titulo para explorar su arbol de progreso y sus objetivos." showViewToggle={false} actions={comparisonAction} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={onToggleSidebar} />
         {comparisonForm}
         {comparisonPanel}
         <ProgressSummary progress={Math.round(data.summary.completionPercentage)} branchCount={data.titles.length} challengeCount={data.titles.reduce((total, title) => total + title.requirements.length, 0)} playerName={data.player.gameName} />
@@ -294,6 +294,7 @@ export function App() {
   const [showComparisonForm, setShowComparisonForm] = useState(false);
   const [comparisonTrees, setComparisonTrees] = useState<{ primary: TreeResponse | null; secondary: TreeResponse | null }>({ primary: null, secondary: null });
   const [comparisonTreeLoading, setComparisonTreeLoading] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(localStorage.getItem('sidebar-collapsed') === 'true');
 
   const featured = data?.titles.find((title) => title.titleId === selectedTitleId);
   const branches = useMemo(() => activeNode ? branchesFromTreeNode(activeNode) : featured ? toBranches(featured) : [], [activeNode, featured]);
@@ -302,6 +303,14 @@ export function App() {
   const displayTitle = activeNode?.challengeName || featured?.titleName || 'Tu progreso';
   const displayRank = `Rango ${activeNode?.targetTier || featured?.requirements[0]?.targetTier || 'Maestro'}`;
   const displayDescription = activeNode?.challengeDescription || 'Alcanzá el rango requerido y completá sus dependencias directas.';
+
+  function toggleSidebar() {
+    setSidebarCollapsed((collapsed) => {
+      const next = !collapsed;
+      localStorage.setItem('sidebar-collapsed', String(next));
+      return next;
+    });
+  }
 
   useEffect(() => {
     fetch('/api/platforms').then((response) => response.json()).then((items) => {
@@ -433,13 +442,13 @@ export function App() {
   const comparisonPanel = data && comparisonData ? <ComparisonPanel primary={data} secondary={comparisonData} selectedTitleId={featured?.titleId ?? null} activeNodeId={activeNode ? String(activeNode.challengeId) : null} primaryTree={comparisonTrees.primary} secondaryTree={comparisonTrees.secondary} treeLoading={comparisonTreeLoading} onSelectTitle={selectTitle} onAdvanceNode={advanceComparisonNode} onClose={closeComparison} /> : null;
 
   if (!data) return <QueryScreen riotId={riotId} platform={platform} platforms={platforms} loading={loading} error={error} onRiotIdChange={setRiotId} onPlatformChange={setPlatform} onSubmit={submitQuery} />;
-  if (!featured) return <CatalogHome data={data} onSelectTitle={selectTitle} onNewQuery={() => { setData(null); setActiveNode(null); setSelectedTitleId(null); closeComparison(); }} comparisonAction={comparisonAction} comparisonForm={comparisonForm} comparisonPanel={comparisonPanel} />;
+  if (!featured) return <CatalogHome data={data} onSelectTitle={selectTitle} onNewQuery={() => { setData(null); setActiveNode(null); setSelectedTitleId(null); closeComparison(); }} comparisonAction={comparisonAction} comparisonForm={comparisonForm} comparisonPanel={comparisonPanel} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={toggleSidebar} />;
 
   return (
-    <div className="app-shell" id="top">
-      <Sidebar branches={branches} destination={featured.titleName} progress={activeNode?.progressPercent ?? featured.progressPercent ?? 0} onNewQuery={() => { setData(null); setActiveNode(null); setSelectedTitleId(null); closeComparison(); }} />
+    <div className={`app-shell ${sidebarCollapsed ? 'app-shell--sidebar-collapsed' : ''}`} id="top">
+      <Sidebar branches={branches} destination={featured.titleName} progress={activeNode?.progressPercent ?? featured.progressPercent ?? 0} onNewQuery={() => { setData(null); setActiveNode(null); setSelectedTitleId(null); closeComparison(); }} onCollapse={toggleSidebar} />
       <main className="main-content">
-        <PageHeader view={view} onViewChange={setView} title={displayTitle} subtitle={displayDescription} onBack={activeNode ? () => { setActiveNode(null); setSelectedId(featured.requirements[0] ? String(featured.requirements[0].challengeId) : ''); } : undefined} backLabel={featured.titleName} actions={comparisonAction} />
+        <PageHeader view={view} onViewChange={setView} title={displayTitle} subtitle={displayDescription} onBack={activeNode ? () => { setActiveNode(null); setSelectedId(featured.requirements[0] ? String(featured.requirements[0].challengeId) : ''); } : undefined} backLabel={featured.titleName} actions={comparisonAction} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={toggleSidebar} />
         {comparisonForm}
         {comparisonPanel}
         <ProgressSummary progress={progress} branchCount={branches.length} challengeCount={activeNode?.children.length ?? featured.requirements.length} playerName={data.player.gameName} />

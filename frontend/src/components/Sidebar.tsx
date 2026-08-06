@@ -1,15 +1,18 @@
 import type { Branch } from '../types';
 import { Icon } from './Icon';
 
-type Props = { branches: Branch[]; destination: string; progress: number; onNewQuery: () => void };
+type Props = { branches: Branch[]; destination: string; progress: number; onNewQuery: () => void; onCollapse: () => void };
 
-export function Sidebar({ branches, destination, progress, onNewQuery }: Props) {
+export function Sidebar({ branches, destination, progress, onNewQuery, onCollapse }: Props) {
   return (
     <aside className="sidebar">
-      <a className="brand" href="#top" aria-label="Riot Titles Attune">
-        <span className="brand__mark">RT</span>
-        <span><strong>RIOT TITLES</strong><small>ATTUNE</small></span>
-      </a>
+      <div className="brand">
+        <a className="brand__link" href="#top" aria-label="Riot Titles Attune">
+          <span className="brand__mark">RT</span>
+          <span><strong>RIOT TITLES</strong><small>ATTUNE</small></span>
+        </a>
+        <button className="sidebar-toggle" type="button" onClick={onCollapse} aria-label="Ocultar barra lateral" aria-expanded="true" title="Ocultar barra lateral"><Icon name="chevron-left" size={17} /></button>
+      </div>
 
       <nav className="sidebar__nav" aria-label="Progreso">
         <p className="eyebrow">Destino</p>
