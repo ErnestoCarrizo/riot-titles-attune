@@ -126,8 +126,11 @@ h1 { margin-bottom: 8px; font-size: clamp(44px, 5vw, 66px); line-height: .98; le
 .comparison-player small { margin-top: 4px; color: var(--muted); font-size: 10px; }
 .comparison-vs { color: var(--gold); font-size: 11px; font-weight: 850; letter-spacing: .1em; text-align: center; }
 .comparison-list { display: grid; max-height: 390px; gap: 7px; overflow-y: auto; padding-right: 5px; }
+.comparison-context-label { margin: 3px 0 9px; color: var(--gold); font-size: 10px; font-weight: 850; letter-spacing: .09em; text-transform: uppercase; }
 .comparison-row { display: grid; grid-template-columns: minmax(180px, 1.25fr) minmax(150px, 1fr) minmax(150px, 1fr) 22px; align-items: center; gap: 16px; width: 100%; min-height: 72px; padding: 11px 13px; color: var(--text); background: rgba(255,255,255,.025); border: 1px solid rgba(150,183,193,.14); border-radius: 7px; cursor: pointer; text-align: left; }
 .comparison-row:hover, .comparison-row.is-selected { background: rgba(23,116,124,.15); border-color: rgba(66,222,217,.48); }
+.comparison-row--leaf { cursor: default; }
+.comparison-row--leaf:hover { background: rgba(255,255,255,.025); border-color: rgba(150,183,193,.14); }
 .comparison-row__title { min-width: 0; }
 .comparison-row__title strong, .comparison-row__title small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .comparison-row__title strong { font-size: 12px; }

@@ -292,6 +292,8 @@ export function App() {
   const [comparisonLoading, setComparisonLoading] = useState(false);
   const [comparisonError, setComparisonError] = useState('');
   const [showComparisonForm, setShowComparisonForm] = useState(false);
+  const [comparisonTrees, setComparisonTrees] = useState<{ primary: TreeResponse | null; secondary: TreeResponse | null }>({ primary: null, secondary: null });
+  const [comparisonTreeLoading, setComparisonTreeLoading] = useState(false);
 
   const featured = data?.titles.find((title) => title.titleId === selectedTitleId);
   const branches = useMemo(() => activeNode ? branchesFromTreeNode(activeNode) : featured ? toBranches(featured) : [], [activeNode, featured]);
@@ -329,6 +331,7 @@ export function App() {
       setSelectedTitleId(null);
       setSelectedId('');
       setComparisonData(null);
+      setComparisonTrees({ primary: null, secondary: null });
       setComparisonError('');
       setShowComparisonForm(false);
     } catch (requestError) {
@@ -345,8 +348,11 @@ export function App() {
     setComparisonLoading(true);
     setComparisonError('');
     try {
-      setComparisonData(await requestProgress(comparisonRiotId.trim(), comparisonPlatform));
+      const nextComparison = await requestProgress(comparisonRiotId.trim(), comparisonPlatform);
+      setComparisonData(nextComparison);
+      setComparisonTrees({ primary: null, secondary: null });
       setShowComparisonForm(false);
+      if (selectedTitleId) void loadComparisonTrees(selectedTitleId, nextComparison);
     } catch (requestError) {
       setComparisonError(requestError instanceof Error ? requestError.message : 'No pudimos cargar el segundo jugador.');
     } finally {
@@ -356,16 +362,34 @@ export function App() {
 
   function closeComparison() {
     setComparisonData(null);
+    setComparisonTrees({ primary: null, secondary: null });
     setComparisonError('');
     setShowComparisonForm(false);
   }
 
-  async function requestTree(titleId: string): Promise<TreeResponse> {
-    if (!data) throw new Error('No hay una consulta activa.');
-    const response = await fetch(`/api/title-tree?riot_id=${encodeURIComponent(data.player.riotId)}&platform=${encodeURIComponent(data.player.platform)}&title_id=${encodeURIComponent(titleId)}`);
+  async function requestTreeFor(player: ProgressResponse['player'], titleId: string): Promise<TreeResponse> {
+    const response = await fetch(`/api/title-tree?riot_id=${encodeURIComponent(player.riotId)}&platform=${encodeURIComponent(player.platform)}&title_id=${encodeURIComponent(titleId)}`);
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.detail || 'No pudimos cargar el desglose.');
     return payload;
+  }
+
+  async function loadComparisonTrees(titleId: string, secondary: ProgressResponse | null = comparisonData) {
+    if (!data || !secondary) return;
+    setComparisonTreeLoading(true);
+    try {
+      const [primaryTree, secondaryTree] = await Promise.all([requestTreeFor(data.player, titleId), requestTreeFor(secondary.player, titleId)]);
+      setComparisonTrees({ primary: primaryTree, secondary: secondaryTree });
+    } catch {
+      setComparisonTrees({ primary: null, secondary: null });
+    } finally {
+      setComparisonTreeLoading(false);
+    }
+  }
+
+  async function requestTree(titleId: string): Promise<TreeResponse> {
+    if (!data) throw new Error('No hay una consulta activa.');
+    return requestTreeFor(data.player, titleId);
   }
 
   function selectTitle(titleId: string) {
@@ -374,6 +398,7 @@ export function App() {
     const title = data?.titles.find((item) => item.titleId === titleId);
     setSelectedId(title?.requirements[0] ? String(title.requirements[0].challengeId) : '');
     setView('tree');
+    if (comparisonData) void loadComparisonTrees(titleId, comparisonData);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -399,9 +424,13 @@ export function App() {
     }
   }
 
+  function advanceComparisonNode(nodeId: string) {
+    if (featured) void openNode(featured.titleId, nodeId);
+  }
+
   const comparisonAction = data ? <button className="compare-trigger" type="button" onClick={() => setShowComparisonForm((visible) => !visible)}><Icon name="compare" size={17} />{comparisonData ? 'Cambiar comparación' : 'Comparar jugador'}</button> : null;
   const comparisonForm = data && showComparisonForm ? <ComparisonForm riotId={comparisonRiotId} platform={comparisonPlatform} platforms={platforms} loading={comparisonLoading} error={comparisonError} onRiotIdChange={setComparisonRiotId} onPlatformChange={setComparisonPlatform} onSubmit={submitComparison} /> : null;
-  const comparisonPanel = data && comparisonData ? <ComparisonPanel primary={data} secondary={comparisonData} selectedTitleId={featured?.titleId ?? null} onSelectTitle={selectTitle} onClose={closeComparison} /> : null;
+  const comparisonPanel = data && comparisonData ? <ComparisonPanel primary={data} secondary={comparisonData} selectedTitleId={featured?.titleId ?? null} activeNodeId={activeNode ? String(activeNode.challengeId) : null} primaryTree={comparisonTrees.primary} secondaryTree={comparisonTrees.secondary} treeLoading={comparisonTreeLoading} onSelectTitle={selectTitle} onAdvanceNode={advanceComparisonNode} onClose={closeComparison} /> : null;
 
   if (!data) return <QueryScreen riotId={riotId} platform={platform} platforms={platforms} loading={loading} error={error} onRiotIdChange={setRiotId} onPlatformChange={setPlatform} onSubmit={submitQuery} />;
   if (!featured) return <CatalogHome data={data} onSelectTitle={selectTitle} onNewQuery={() => { setData(null); setActiveNode(null); setSelectedTitleId(null); closeComparison(); }} comparisonAction={comparisonAction} comparisonForm={comparisonForm} comparisonPanel={comparisonPanel} />;
