@@ -1,17 +1,21 @@
 import type { Branch } from '../types';
 import { Icon } from './Icon';
 import { ProgressBar } from './ProgressBar';
+import { FavoriteButton } from './FavoriteButton';
 
 type Props = {
   branch: Branch;
   isSelected: boolean;
   onSelect: (id: string) => void;
   onOpenTree: () => void;
+  isFavorite: boolean;
+  onToggleFavorite: () => void;
 };
 
-export function BranchCard({ branch, isSelected, onSelect, onOpenTree }: Props) {
+export function BranchCard({ branch, isSelected, onSelect, onOpenTree, isFavorite, onToggleFavorite }: Props) {
   return (
     <article id={branch.id} className={`branch-card branch-card--${branch.tone} ${isSelected ? 'is-selected' : ''}`}>
+      <FavoriteButton className="branch-card__favorite" isFavorite={isFavorite} label={branch.name} onToggle={onToggleFavorite} />
       <button className="branch-card__select" type="button" onClick={() => onSelect(branch.id)} aria-label={`Seleccionar ${branch.name}`}>
         <span className="branch-card__icon"><Icon name={branch.icon} size={29} /></span>
         <h3>{branch.name}</h3>

@@ -1,9 +1,10 @@
 import type { Branch } from '../types';
+import type { FavoriteTarget } from '../types';
 import { Icon } from './Icon';
 
-type Props = { branches: Branch[]; destination: string; progress: number; onNewQuery: () => void; onCollapse: () => void };
+type Props = { branches: Branch[]; destination: string; progress: number; onNewQuery: () => void; onCollapse: () => void; favorites: FavoriteTarget[]; onOpenFavorite: (favorite: FavoriteTarget) => void };
 
-export function Sidebar({ branches, destination, progress, onNewQuery, onCollapse }: Props) {
+export function Sidebar({ branches, destination, progress, onNewQuery, onCollapse, favorites, onOpenFavorite }: Props) {
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -20,6 +21,8 @@ export function Sidebar({ branches, destination, progress, onNewQuery, onCollaps
           <Icon name="diamond" size={19} />
           {destination}
         </a>
+
+        {favorites.length ? <><p className="eyebrow sidebar__section">Fijados</p><div className="sidebar__favorites">{favorites.map((favorite) => <button className="sidebar__favorite" type="button" key={`${favorite.kind}:${favorite.titleId}:${favorite.challengeId ?? ''}`} onClick={() => onOpenFavorite(favorite)} aria-label={`Abrir ${favorite.label}`}><span className="mini-icon mini-icon--gold"><Icon name={favorite.kind === 'title' ? 'diamond' : 'star'} size={15} /></span><span><strong>{favorite.label}</strong><small>{favorite.kind === 'title' ? 'Título' : 'Rama'}</small></span></button>)}</div></> : null}
 
         <p className="eyebrow sidebar__section">Ramas clave</p>
         <div className="sidebar__branches">

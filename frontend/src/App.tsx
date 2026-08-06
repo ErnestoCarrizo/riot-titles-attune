@@ -8,8 +8,10 @@ import { Sidebar } from './components/Sidebar';
 import { SkillTree } from './components/SkillTree';
 import { ProgressBar } from './components/ProgressBar';
 import { ComparisonForm, ComparisonPanel } from './components/ComparisonPanel';
+import { FavoriteButton } from './components/FavoriteButton';
+import { hasFavorite, loadFavorites, saveFavorites, toggleFavorite as toggleStoredFavorite } from './favorites';
 import type { ReactNode } from 'react';
-import type { Branch, ProgressResponse, Requirement, TitleProgress, TreeNode, TreeResponse } from './types';
+import type { Branch, FavoriteTarget, ProgressResponse, Requirement, TitleProgress, TreeNode, TreeResponse } from './types';
 
 const iconNames = ['sword', 'leaf', 'trophy'] as const;
 const tones = ['cyan', 'orange', 'lime'] as const;
@@ -215,35 +217,35 @@ function TreeDialog({ tree, onClose }: { tree: TreeResponse; onClose: () => void
   );
 }
 
-function CatalogSection({ titles, onOpenTree }: { titles: TitleProgress[]; onOpenTree: (titleId: string) => void }) {
+function CatalogSection({ titles, favorites, onOpenTree, onToggleTitleFavorite }: { titles: TitleProgress[]; favorites: FavoriteTarget[]; onOpenTree: (titleId: string) => void; onToggleTitleFavorite: (title: TitleProgress) => void }) {
   const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<'all' | TitleProgress['status']>('all');
+  const [filter, setFilter] = useState<'all' | 'favorites' | TitleProgress['status']>('all');
   const visible = titles.filter((title) => {
-    const matchesFilter = filter === 'all' || title.status === filter;
+    const matchesFilter = filter === 'all' || (filter === 'favorites' ? favorites.some((favorite) => favorite.titleId === title.titleId) : title.status === filter);
     const text = `${title.titleName} ${title.requirements.map((requirement) => requirement.challengeName).join(' ')}`.toLocaleLowerCase();
     return matchesFilter && text.includes(query.toLocaleLowerCase());
   });
-  const labels: Record<'all' | TitleProgress['status'], string> = { all: 'Todos', unlocked: 'Desbloqueados', in_progress: 'En progreso', not_started: 'Sin comenzar', unknown: 'No calculable' };
+  const labels: Record<'all' | 'favorites' | TitleProgress['status'], string> = { all: 'Todos', favorites: 'Fijados', unlocked: 'Desbloqueados', in_progress: 'En progreso', not_started: 'Sin comenzar', unknown: 'No calculable' };
   return (
     <section className="catalog-panel" aria-labelledby="catalog-title">
       <div className="catalog-heading"><div><p className="eyebrow eyebrow--gold">Catálogo personal</p><h2 id="catalog-title">Tus títulos</h2></div><span className="muted">{visible.length} de {titles.length}</span></div>
       <div className="catalog-tools"><label><span className="sr-only">Buscar títulos</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar título o desafío" /></label><div className="catalog-filters">{Object.keys(labels).map((key) => <button key={key} type="button" className={filter === key ? 'is-active' : ''} onClick={() => setFilter(key as typeof filter)}>{labels[key as keyof typeof labels]}</button>)}</div></div>
-      <div className="catalog-list">{visible.map((title) => <article className="catalog-card" key={title.titleId}><div><h3>{title.titleName}</h3><span className={`title-status status-${title.status}`}>{labels[title.status]}</span></div><div className="catalog-card__progress"><span>{title.progressPercent === null ? 'Progreso no calculable' : `${Math.round(title.progressPercent)}% de avance`}</span>{title.progressPercent !== null ? <ProgressBar value={title.progressPercent} tone={title.status === 'in_progress' ? 'orange' : 'cyan'} /> : null}</div><button type="button" onClick={() => onOpenTree(title.titleId)}>Ver desglose <Icon name="chevron-right" size={15} /></button></article>)}</div>
+      <div className="catalog-list">{visible.map((title) => <article className="catalog-card" key={title.titleId}><div className="catalog-card__heading"><div><h3>{title.titleName}</h3><span className={`title-status status-${title.status}`}>{labels[title.status]}</span></div><FavoriteButton isFavorite={hasFavorite(favorites, { kind: 'title', titleId: title.titleId, label: title.titleName })} label={`el título ${title.titleName}`} onToggle={() => onToggleTitleFavorite(title)} /></div><div className="catalog-card__progress"><span>{title.progressPercent === null ? 'Progreso no calculable' : `${Math.round(title.progressPercent)}% de avance`}</span>{title.progressPercent !== null ? <ProgressBar value={title.progressPercent} tone={title.status === 'in_progress' ? 'orange' : 'cyan'} /> : null}</div><button type="button" onClick={() => onOpenTree(title.titleId)}>Ver desglose <Icon name="chevron-right" size={15} /></button></article>)}</div>
       {!visible.length ? <p className="catalog-empty">No hay títulos que coincidan con esta búsqueda.</p> : null}
     </section>
   );
 }
 
-function CatalogHome({ data, onSelectTitle, onNewQuery, comparisonAction, comparisonForm, comparisonPanel, sidebarCollapsed, onToggleSidebar }: { data: ProgressResponse; onSelectTitle: (titleId: string) => void; onNewQuery: () => void; comparisonAction: ReactNode; comparisonForm: ReactNode; comparisonPanel: ReactNode; sidebarCollapsed: boolean; onToggleSidebar: () => void }) {
+function CatalogHome({ data, favorites, onSelectTitle, onNewQuery, comparisonAction, comparisonForm, comparisonPanel, sidebarCollapsed, onToggleSidebar, onOpenFavorite, onToggleTitleFavorite }: { data: ProgressResponse; favorites: FavoriteTarget[]; onSelectTitle: (titleId: string) => void; onNewQuery: () => void; comparisonAction: ReactNode; comparisonForm: ReactNode; comparisonPanel: ReactNode; sidebarCollapsed: boolean; onToggleSidebar: () => void; onOpenFavorite: (favorite: FavoriteTarget) => void; onToggleTitleFavorite: (title: TitleProgress) => void }) {
   return (
     <div className={`app-shell ${sidebarCollapsed ? 'app-shell--sidebar-collapsed' : ''}`} id="top">
-      <Sidebar branches={[]} destination="Catalogo" progress={data.summary.completionPercentage} onNewQuery={onNewQuery} onCollapse={onToggleSidebar} />
+      <Sidebar branches={[]} destination="Catalogo" progress={data.summary.completionPercentage} onNewQuery={onNewQuery} onCollapse={onToggleSidebar} favorites={favorites} onOpenFavorite={onOpenFavorite} />
       <main className="main-content">
         <PageHeader view="list" onViewChange={() => undefined} title="Tus titulos" subtitle="Elegi un titulo para explorar su arbol de progreso y sus objetivos." showViewToggle={false} actions={comparisonAction} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={onToggleSidebar} />
         {comparisonForm}
         {comparisonPanel}
         <ProgressSummary progress={Math.round(data.summary.completionPercentage)} branchCount={data.titles.length} challengeCount={data.titles.reduce((total, title) => total + title.requirements.length, 0)} playerName={data.player.gameName} />
-        <CatalogSection titles={data.titles} onOpenTree={onSelectTitle} />
+        <CatalogSection titles={data.titles} favorites={favorites} onOpenTree={onSelectTitle} onToggleTitleFavorite={onToggleTitleFavorite} />
       </main>
     </div>
   );
@@ -295,6 +297,7 @@ export function App() {
   const [comparisonTrees, setComparisonTrees] = useState<{ primary: TreeResponse | null; secondary: TreeResponse | null }>({ primary: null, secondary: null });
   const [comparisonTreeLoading, setComparisonTreeLoading] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(localStorage.getItem('sidebar-collapsed') === 'true');
+  const [favorites, setFavorites] = useState<FavoriteTarget[]>([]);
 
   const featured = data?.titles.find((title) => title.titleId === selectedTitleId);
   const branches = useMemo(() => activeNode ? branchesFromTreeNode(activeNode) : featured ? toBranches(featured) : [], [activeNode, featured]);
@@ -303,6 +306,7 @@ export function App() {
   const displayTitle = activeNode?.challengeName || featured?.titleName || 'Tu progreso';
   const displayRank = `Rango ${activeNode?.targetTier || featured?.requirements[0]?.targetTier || 'Maestro'}`;
   const displayDescription = activeNode?.challengeDescription || 'Alcanzá el rango requerido y completá sus dependencias directas.';
+  const visibleFavorites = useMemo(() => data ? favorites.filter((favorite) => data.titles.some((title) => title.titleId === favorite.titleId)) : [], [data, favorites]);
 
   function toggleSidebar() {
     setSidebarCollapsed((collapsed) => {
@@ -310,6 +314,36 @@ export function App() {
       localStorage.setItem('sidebar-collapsed', String(next));
       return next;
     });
+  }
+
+  function updateFavorite(target: FavoriteTarget) {
+    if (!data) return;
+    setFavorites((current) => {
+      const next = toggleStoredFavorite(current, target);
+      saveFavorites(data.player.platform, data.player.riotId, next);
+      return next;
+    });
+  }
+
+  function toggleTitleFavorite(title: TitleProgress) {
+    updateFavorite({ kind: 'title', titleId: title.titleId, label: title.titleName });
+  }
+
+  function isBranchFavorite(branchId: string): boolean {
+    if (!featured) return false;
+    const branch = branches.find((item) => item.id === branchId);
+    return branch ? hasFavorite(favorites, { kind: 'node', titleId: featured.titleId, challengeId: Number(branchId), label: branch.name }) : false;
+  }
+
+  function toggleBranchFavorite(branchId: string) {
+    if (!featured) return;
+    const branch = branches.find((item) => item.id === branchId);
+    if (branch) updateFavorite({ kind: 'node', titleId: featured.titleId, challengeId: Number(branchId), label: branch.name });
+  }
+
+  function openFavorite(favorite: FavoriteTarget) {
+    selectTitle(favorite.titleId);
+    if (favorite.kind === 'node' && favorite.challengeId !== undefined) void openNode(favorite.titleId, String(favorite.challengeId));
   }
 
   useEffect(() => {
@@ -343,6 +377,7 @@ export function App() {
       setComparisonTrees({ primary: null, secondary: null });
       setComparisonError('');
       setShowComparisonForm(false);
+      setFavorites(loadFavorites(payload.player.platform, payload.player.riotId));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'No pudimos completar la consulta.');
     } finally {
@@ -438,24 +473,25 @@ export function App() {
   }
 
   const comparisonAction = data ? <button className="compare-trigger" type="button" onClick={() => setShowComparisonForm((visible) => !visible)}><Icon name="compare" size={17} />{comparisonData ? 'Cambiar comparación' : 'Comparar jugador'}</button> : null;
+  const titleFavoriteAction = featured ? <FavoriteButton isFavorite={hasFavorite(favorites, { kind: 'title', titleId: featured.titleId, label: featured.titleName })} label={`el título ${featured.titleName}`} onToggle={() => toggleTitleFavorite(featured)} /> : null;
   const comparisonForm = data && showComparisonForm ? <ComparisonForm riotId={comparisonRiotId} platform={comparisonPlatform} platforms={platforms} loading={comparisonLoading} error={comparisonError} onRiotIdChange={setComparisonRiotId} onPlatformChange={setComparisonPlatform} onSubmit={submitComparison} /> : null;
   const comparisonPanel = data && comparisonData ? <ComparisonPanel primary={data} secondary={comparisonData} selectedTitleId={featured?.titleId ?? null} activeNodeId={activeNode ? String(activeNode.challengeId) : null} primaryTree={comparisonTrees.primary} secondaryTree={comparisonTrees.secondary} treeLoading={comparisonTreeLoading} onSelectTitle={selectTitle} onAdvanceNode={advanceComparisonNode} onClose={closeComparison} /> : null;
 
   if (!data) return <QueryScreen riotId={riotId} platform={platform} platforms={platforms} loading={loading} error={error} onRiotIdChange={setRiotId} onPlatformChange={setPlatform} onSubmit={submitQuery} />;
-  if (!featured) return <CatalogHome data={data} onSelectTitle={selectTitle} onNewQuery={() => { setData(null); setActiveNode(null); setSelectedTitleId(null); closeComparison(); }} comparisonAction={comparisonAction} comparisonForm={comparisonForm} comparisonPanel={comparisonPanel} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={toggleSidebar} />;
+  if (!featured) return <CatalogHome data={data} favorites={visibleFavorites} onSelectTitle={selectTitle} onNewQuery={() => { setData(null); setActiveNode(null); setSelectedTitleId(null); closeComparison(); }} comparisonAction={comparisonAction} comparisonForm={comparisonForm} comparisonPanel={comparisonPanel} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={toggleSidebar} onOpenFavorite={openFavorite} onToggleTitleFavorite={toggleTitleFavorite} />;
 
   return (
     <div className={`app-shell ${sidebarCollapsed ? 'app-shell--sidebar-collapsed' : ''}`} id="top">
-      <Sidebar branches={branches} destination={featured.titleName} progress={activeNode?.progressPercent ?? featured.progressPercent ?? 0} onNewQuery={() => { setData(null); setActiveNode(null); setSelectedTitleId(null); closeComparison(); }} onCollapse={toggleSidebar} />
+      <Sidebar branches={branches} destination={featured.titleName} progress={activeNode?.progressPercent ?? featured.progressPercent ?? 0} onNewQuery={() => { setData(null); setActiveNode(null); setSelectedTitleId(null); closeComparison(); }} onCollapse={toggleSidebar} favorites={visibleFavorites} onOpenFavorite={openFavorite} />
       <main className="main-content">
-        <PageHeader view={view} onViewChange={setView} title={displayTitle} subtitle={displayDescription} onBack={activeNode ? () => { setActiveNode(null); setSelectedId(featured.requirements[0] ? String(featured.requirements[0].challengeId) : ''); } : undefined} backLabel={featured.titleName} actions={comparisonAction} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={toggleSidebar} />
+        <PageHeader view={view} onViewChange={setView} title={displayTitle} subtitle={displayDescription} onBack={activeNode ? () => { setActiveNode(null); setSelectedId(featured.requirements[0] ? String(featured.requirements[0].challengeId) : ''); } : undefined} backLabel={featured.titleName} actions={<>{titleFavoriteAction}{comparisonAction}</>} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={toggleSidebar} />
         {comparisonForm}
         {comparisonPanel}
         <ProgressSummary progress={progress} branchCount={branches.length} challengeCount={activeNode?.children.length ?? featured.requirements.length} playerName={data.player.gameName} />
-        {view === 'tree' ? <SkillTree branches={branches} selectedId={selectedId} onSelect={setSelectedId} title={displayTitle} progress={progress} rank={displayRank} onOpenTree={(nodeId) => openNode(featured.titleId, nodeId)} /> : <section className="list-view" aria-label="Lista de ramas">{branches.map((branch) => <BranchCard key={branch.id} branch={branch} isSelected={selectedId === branch.id} onSelect={setSelectedId} onOpenTree={() => openNode(featured.titleId, branch.id)} />)}</section>}
+        {view === 'tree' ? <SkillTree branches={branches} selectedId={selectedId} onSelect={setSelectedId} title={displayTitle} progress={progress} rank={displayRank} onOpenTree={(nodeId) => openNode(featured.titleId, nodeId)} isFavorite={isBranchFavorite} onToggleFavorite={toggleBranchFavorite} /> : <section className="list-view" aria-label="Lista de ramas">{branches.map((branch) => <BranchCard key={branch.id} branch={branch} isSelected={selectedId === branch.id} onSelect={setSelectedId} onOpenTree={() => openNode(featured.titleId, branch.id)} isFavorite={isBranchFavorite(branch.id)} onToggleFavorite={() => toggleBranchFavorite(branch.id)} />)}</section>}
         <DetailPanel title={activeNode?.challengeName || selectedBranch?.name || featured.titleName} rank={activeNode ? displayRank : selectedBranch?.rank || displayRank} description={activeNode?.challengeDescription || selectedBranch?.description || 'El título máximo de la rama ARAM. Completá sus dependencias directas para alcanzar el rango requerido.'} branches={branches} />
         <p className="footer-note"><Icon name="info" size={17} />Completá las ramas al rango requerido para desbloquear “{featured.titleName}”.</p>
-        <CatalogSection titles={data.titles} onOpenTree={selectTitle} />
+        <CatalogSection titles={data.titles} favorites={visibleFavorites} onOpenTree={selectTitle} onToggleTitleFavorite={toggleTitleFavorite} />
       </main>
     </div>
   );

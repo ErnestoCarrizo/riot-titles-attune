@@ -1,6 +1,13 @@
 export type BranchStatus = 'unlocked' | 'in-progress' | 'pending';
 export type BranchTone = 'cyan' | 'orange' | 'lime';
-export type IconName = 'diamond' | 'sword' | 'feather' | 'leaf' | 'trophy' | 'tree' | 'list' | 'compare' | 'check' | 'info' | 'arrow-left' | 'chevron-left' | 'chevron-right';
+export type IconName = 'diamond' | 'sword' | 'feather' | 'leaf' | 'trophy' | 'tree' | 'list' | 'star' | 'compare' | 'check' | 'info' | 'arrow-left' | 'chevron-left' | 'chevron-right';
+
+export type FavoriteTarget = {
+  kind: 'title' | 'node';
+  titleId: string;
+  challengeId?: number;
+  label: string;
+};
 
 export interface Branch {
   id: string;

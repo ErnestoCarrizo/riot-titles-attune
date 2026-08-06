@@ -10,9 +10,11 @@ interface Props {
   progress: number;
   rank: string;
   onOpenTree: (id: string) => void;
+  isFavorite: (id: string) => boolean;
+  onToggleFavorite: (id: string) => void;
 }
 
-export function SkillTree({ branches, selectedId, onSelect, title, progress, rank, onOpenTree }: Props) {
+export function SkillTree({ branches, selectedId, onSelect, title, progress, rank, onOpenTree, isFavorite, onToggleFavorite }: Props) {
   return (
     <section className="tree-stage" id="tree" aria-label="Árbol de progreso">
       <div className="tree-stage__orbit" aria-hidden="true" />
@@ -32,6 +34,8 @@ export function SkillTree({ branches, selectedId, onSelect, title, progress, ran
             isSelected={selectedId === branch.id}
             onSelect={onSelect}
             onOpenTree={() => onOpenTree(branch.id)}
+            isFavorite={isFavorite(branch.id)}
+            onToggleFavorite={() => onToggleFavorite(branch.id)}
           />
         ))}
       </div>
