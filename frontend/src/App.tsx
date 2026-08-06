@@ -329,6 +329,15 @@ export function App() {
     updateFavorite({ kind: 'title', titleId: title.titleId, label: title.titleName });
   }
 
+  function toggleCurrentFavorite() {
+    if (!featured) return;
+    if (activeNode) {
+      updateFavorite({ kind: 'node', titleId: featured.titleId, challengeId: activeNode.challengeId, label: activeNode.challengeName });
+      return;
+    }
+    toggleTitleFavorite(featured);
+  }
+
   function isBranchFavorite(branchId: string): boolean {
     if (!featured) return false;
     const branch = branches.find((item) => item.id === branchId);
@@ -473,7 +482,8 @@ export function App() {
   }
 
   const comparisonAction = data ? <button className="compare-trigger" type="button" onClick={() => setShowComparisonForm((visible) => !visible)}><Icon name="compare" size={17} />{comparisonData ? 'Cambiar comparación' : 'Comparar jugador'}</button> : null;
-  const titleFavoriteAction = featured ? <FavoriteButton isFavorite={hasFavorite(favorites, { kind: 'title', titleId: featured.titleId, label: featured.titleName })} label={`el título ${featured.titleName}`} onToggle={() => toggleTitleFavorite(featured)} /> : null;
+  const currentFavorite = featured ? activeNode ? { kind: 'node' as const, titleId: featured.titleId, challengeId: activeNode.challengeId, label: activeNode.challengeName } : { kind: 'title' as const, titleId: featured.titleId, label: featured.titleName } : null;
+  const titleFavoriteAction = currentFavorite ? <FavoriteButton isFavorite={hasFavorite(favorites, currentFavorite)} label={activeNode ? `el objetivo ${activeNode.challengeName}` : `el título ${featured?.titleName}`} onToggle={toggleCurrentFavorite} /> : null;
   const comparisonForm = data && showComparisonForm ? <ComparisonForm riotId={comparisonRiotId} platform={comparisonPlatform} platforms={platforms} loading={comparisonLoading} error={comparisonError} onRiotIdChange={setComparisonRiotId} onPlatformChange={setComparisonPlatform} onSubmit={submitComparison} /> : null;
   const comparisonPanel = data && comparisonData ? <ComparisonPanel primary={data} secondary={comparisonData} selectedTitleId={featured?.titleId ?? null} activeNodeId={activeNode ? String(activeNode.challengeId) : null} primaryTree={comparisonTrees.primary} secondaryTree={comparisonTrees.secondary} treeLoading={comparisonTreeLoading} onSelectTitle={selectTitle} onAdvanceNode={advanceComparisonNode} onClose={closeComparison} /> : null;
 
