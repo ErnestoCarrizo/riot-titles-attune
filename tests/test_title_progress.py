@@ -15,6 +15,13 @@ def test_normal_progress_and_remaining():
     assert result.requirements[0].progressDirection == "increase"
 
 
+def test_positive_value_with_none_level_is_in_progress():
+    title = CatalogTitle("value-only", "Objetivo", (requirement(),))
+    result = build_title(title, parse_player_challenges({"challenges": [{"challengeId": 1, "level": "NONE", "value": 2}]}))
+    assert result.status == "in_progress"
+    assert result.progressPercent == 13.33
+
+
 def test_requirement_exposes_when_it_has_child_challenges():
     title = CatalogTitle("tree", "Árbol", (requirement(challenge_id=10),))
     result = build_title(title, {}, {10: [11]})

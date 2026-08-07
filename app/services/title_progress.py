@@ -73,12 +73,14 @@ def _is_unlocked(requirement: CatalogRequirement, player: PlayerChallenge | None
 def _status(requirement: CatalogRequirement, player: PlayerChallenge | None, unlocked: bool) -> str:
     if unlocked:
         return "unlocked"
-    if player is None or player.level == "NONE":
+    if player is None:
         return "not_started"
     if player.value is not None and player.value > 0:
         return "in_progress"
     if player.level in TIER_ORDER:
         return "in_progress"
+    if player.level == "NONE":
+        return "not_started"
     return "unknown"
 
 
